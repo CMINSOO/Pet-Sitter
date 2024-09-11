@@ -1,30 +1,28 @@
-import { Booking } from 'src/booking/entities/booking.entity';
+import { Sitter } from 'src/sitter/entities/sitter.entity';
+import { User } from 'src/user/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  OneToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('users')
-export class User {
+@Entity('bookings')
+export class Booking {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  email: string;
+  userId: number;
 
   @Column()
-  password: string;
+  sitterId: number;
 
   @Column()
-  nickname: string;
-
-  @Column()
-  profileUrl: string;
+  bookingDate: Date;
 
   @Column()
   description: string;
@@ -38,6 +36,9 @@ export class User {
   @DeleteDateColumn()
   deletedAt: Date;
 
-  @OneToMany(() => Booking, (booking) => booking.user)
-  booking: Booking[];
+  @ManyToOne(() => User, (user) => user.booking)
+  user: User;
+
+  @ManyToOne(() => Sitter, (sitter) => sitter.booking)
+  sitter: Sitter;
 }

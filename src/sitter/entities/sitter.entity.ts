@@ -1,8 +1,10 @@
+import { Booking } from 'src/booking/entities/booking.entity';
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -29,4 +31,7 @@ export class Sitter {
 
   @DeleteDateColumn()
   deletedAt: Date;
+
+  @OneToMany(() => Booking, (booking) => booking.user)
+  booking: Booking[];
 }
