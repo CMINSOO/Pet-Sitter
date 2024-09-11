@@ -8,6 +8,7 @@ import { typeOrmModuleOptions } from 'configs/database.config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { SitterModule } from './sitter/sitter.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SitterModule } from './sitter/sitter.module';
     UserModule,
     AuthModule,
     SitterModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
