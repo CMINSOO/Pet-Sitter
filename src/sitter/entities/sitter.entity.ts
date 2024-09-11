@@ -7,8 +7,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('users')
-export class User {
+@Entity('sitters')
+export class Sitter {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -20,12 +20,6 @@ export class User {
 
   @Column()
   nickname: string;
-
-  @Column()
-  profileUrl: string;
-
-  @Column()
-  description: string;
 
   @CreateDateColumn()
   createdAt: Date;
