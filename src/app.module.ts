@@ -5,6 +5,9 @@ import { ConfigModule } from '@nestjs/config';
 import Joi from 'joi';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmModuleOptions } from 'configs/database.config';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { SitterModule } from './sitter/sitter.module';
 
 @Module({
   imports: [
@@ -15,6 +18,9 @@ import { typeOrmModuleOptions } from 'configs/database.config';
       }),
     }),
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
+    UserModule,
+    AuthModule,
+    SitterModule,
   ],
   controllers: [AppController],
   providers: [AppService],
