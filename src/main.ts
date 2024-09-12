@@ -7,21 +7,9 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
   const configService = app.get(ConfigService);
+  const port = configService.get<number>('PORT');
 
-  const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    // title은 제목 이름 정하는것
-    .setDescription('The cats API description')
-    // description: 디스크립션 내용 적는부분
-    .setVersion('1.0')
-    .addTag('cats')
-    //태그는 카테고리개념이라고 생각하면됨
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
-
-  app.setGlobalPrefix('api');
-
+  app.setGlobalPrefix('api', { exclude: ['health-check'] });
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -29,7 +17,21 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  const port = configService.get<number>('PORT');
+  const config = new DocumentBuilder()
+    .setTitle('Pet Sitter')
+    .setDescription('The Pet Sitter API description')
+    .setVersion('1.0')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }) // JWT 사용을 위한 설정
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // 새로고침 시에도 JWT 유지하기
+      tagsSorter: 'alpha', // API 그룹 정렬을 알파벳 순으로
+      operationsSorter: 'alpha', // API 그룹 내 정렬을 알파벳 순으로
+    },
+  });
+
   await app.listen(port);
 }
 bootstrap();

@@ -5,13 +5,16 @@ import { CreateSitterDto } from './dto/create-sitter.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { UserInfo } from './decorators/user-info.decorator';
 import { User } from 'src/user/entities/user.entity';
+import { SignInDto } from './dto/user-sign-in.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   /**
-   * 유저회원가입
+   * 회원가입
    * @param createUserDto
    * @returns
    */
@@ -49,8 +52,8 @@ export class AuthController {
    */
   @UseGuards(LocalAuthGuard)
   @Post('sign-in')
-  async userSignIn(@UserInfo() user: User) {
-    const data = await this.authService.userSignIn(user.id);
+  async userSignIn(@UserInfo() user: User, @Body() signInDto: SignInDto) {
+    const data = await this.authService.userSignIn(user.id, signInDto);
 
     return {
       status: HttpStatus.OK,

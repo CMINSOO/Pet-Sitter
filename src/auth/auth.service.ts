@@ -47,6 +47,16 @@ export class AuthService {
     }
   }
 
+  async findUserById(payloadId: number) {
+    const user = await this.UserRepository.findOne({
+      where: { id: payloadId },
+    });
+    if (!user) {
+      throw new UnauthorizedException('인증 정보가 일치하지 않습니다.');
+    }
+    return user.id;
+  }
+
   async checkNickname(nickname: string) {
     const existUserNickname = await this.UserRepository.findOne({
       where: { nickname },
@@ -154,15 +164,10 @@ export class AuthService {
     return accessToken;
   }
 
-  async userSignIn(userId: number) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async userSignIn(userId: number, signInDto: SignInDto) {
     const accessToken = await this.createToken(userId);
 
-    return accessToken;
-  }
-
-  async sitterSignIn(sitterId: number) {
-    console.log(sitterId);
-    const accessToken = await this.createToken(sitterId);
     return accessToken;
   }
 }
