@@ -1,6 +1,13 @@
 import { PickType } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsStrongPassword,
+} from 'class-validator';
 import { User } from 'src/user/entities/user.entity';
+import { UserType } from '../types/user-type';
 
 export class SignInDto extends PickType(User, ['email', 'password']) {
   @IsString()
@@ -10,4 +17,8 @@ export class SignInDto extends PickType(User, ['email', 'password']) {
   @IsStrongPassword()
   @IsNotEmpty()
   password: string;
+
+  @IsEnum({ type: 'enum', enum: UserType, default: UserType.USER })
+  @IsOptional()
+  userType: UserType;
 }
