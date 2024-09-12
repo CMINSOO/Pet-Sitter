@@ -1,13 +1,21 @@
-import { Controller, Post, Body, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CreateSitterDto } from './dto/create-sitter.dto';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { UserInfo } from './decorators/user-info.decorator';
+import { User } from 'src/user/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('sign-up')
+  /**
+   * 유저회원가입
+   * @param createUserDto
+   * @returns
+   */
+  @Post('sign-up/user')
   async signUp(@Body() createUserDto: CreateUserDto) {
     const data = await this.authService.signUp(createUserDto);
 
@@ -18,7 +26,12 @@ export class AuthController {
     };
   }
 
-  @Post('sitter-sign-up')
+  /**
+   * 시터회원가입
+   * @param createSitterDto
+   * @returns
+   */
+  @Post('sign-up/sitter')
   async sitterSignUp(@Body() createSitterDto: CreateSitterDto) {
     const data = await this.authService.sitterSignUp(createSitterDto);
 
@@ -26,6 +39,23 @@ export class AuthController {
       status: HttpStatus.CREATED,
       message: '회원가입 에 성공하였습니다',
       data,
+    };
+  }
+
+  /**
+   * 로그인
+   * @param user
+   * @returns
+   */
+  @UseGuards(LocalAuthGuard)
+  @Post('sign-in')
+  async userSignIn(@UserInfo() user: User) {
+    const data = await this.authService.userSignIn(user.id);
+
+    return {
+      status: HttpStatus.OK,
+      message: '로그인에 성공하였습니다',
+      data: data,
     };
   }
 }

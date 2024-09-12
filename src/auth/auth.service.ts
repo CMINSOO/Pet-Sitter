@@ -2,6 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +12,9 @@ import { Repository } from 'typeorm';
 import bcrypt from 'bcrypt';
 import { CreateSitterDto } from './dto/create-sitter.dto';
 import { Sitter } from 'src/sitter/entities/sitter.entity';
+import { SignInDto } from './dto/user-sign-in.dto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +23,8 @@ export class AuthService {
     private readonly UserRepository: Repository<User>,
     @InjectRepository(Sitter)
     private readonly SitterRepository: Repository<Sitter>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async checkEmail(email: string) {
@@ -25,7 +32,10 @@ export class AuthService {
       where: { email },
     });
 
-    if (existedEmail) {
+    const existSitterEmail = await this.SitterRepository.findOne({
+      where: { email },
+    });
+    if (existedEmail || existSitterEmail) {
       throw new ConflictException('이미 사용중인 이메일 입니다.');
     }
     return true;
@@ -48,6 +58,39 @@ export class AuthService {
     if (existSitterNickname || existUserNickname) {
       throw new ConflictException('이미 사용중인 닉네임 입니다');
     }
+  }
+
+  async validateUser({ email, password }: SignInDto) {
+    const user = await this.UserRepository.findOne({
+      where: { email },
+      select: { id: true, password: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('인증 정보가 일치하지 않습니다');
+    }
+
+    const isPasswordMatched = bcrypt.compareSync(password, user.password);
+    if (!isPasswordMatched) {
+      throw new UnauthorizedException('인증정보가 일치하지 않습니다');
+    }
+    return { id: user.id };
+  }
+  async validateSitter({ email, password }: SignInDto) {
+    const sitter = await this.SitterRepository.findOne({
+      where: { email },
+      select: { id: true, password: true },
+    });
+
+    if (!sitter) {
+      throw new NotFoundException('인증 정보가 일치하지 않습니다');
+    }
+
+    const isPasswordMatched = bcrypt.compareSync(password, sitter.password);
+    if (!isPasswordMatched) {
+      throw new UnauthorizedException('인증정보가 일치하지 않습니다');
+    }
+    return { id: sitter.id };
   }
 
   async signUp(createUserDto: CreateUserDto) {
@@ -99,5 +142,27 @@ export class AuthService {
     sitter.deletedAt = undefined;
 
     return sitter;
+  }
+
+  async createToken(userId) {
+    const payload = { id: userId };
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRES'),
+    });
+
+    return accessToken;
+  }
+
+  async userSignIn(userId: number) {
+    const accessToken = await this.createToken(userId);
+
+    return accessToken;
+  }
+
+  async sitterSignIn(sitterId: number) {
+    console.log(sitterId);
+    const accessToken = await this.createToken(sitterId);
+    return accessToken;
   }
 }
