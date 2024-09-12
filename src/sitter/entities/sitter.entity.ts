@@ -23,6 +23,12 @@ export class Sitter {
   @Column()
   nickname: string;
 
+  @Column()
+  profileUrl: string;
+
+  @Column()
+  description: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
