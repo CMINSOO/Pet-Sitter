@@ -1,4 +1,5 @@
 import { Booking } from 'src/booking/entities/booking.entity';
+import { Recommend } from 'src/sitter/entities/recommend-sitter.entity';
 import {
   Column,
   CreateDateColumn,
@@ -40,4 +41,7 @@ export class User {
 
   @OneToMany(() => Booking, (booking) => booking.user)
   booking: Booking[];
+
+  @OneToMany(() => Recommend, (recommend) => recommend.user)
+  recommend: Recommend[];
 }

@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Recommend } from './recommend-sitter.entity';
 
 @Entity('sitters')
 export class Sitter {
@@ -29,6 +30,9 @@ export class Sitter {
   @Column()
   description: string;
 
+  @Column({ default: 0 })
+  recommendCount: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -40,4 +44,7 @@ export class Sitter {
 
   @OneToMany(() => Booking, (booking) => booking.user)
   booking: Booking[];
+
+  @OneToMany(() => Recommend, (recommend) => recommend.sitter)
+  recommends: Recommend[];
 }
