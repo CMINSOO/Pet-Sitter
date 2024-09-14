@@ -18,7 +18,6 @@ export class UserService {
 
   async getMyInfo(email: string) {
     const myInfo = await this.userRepository.findOneBy({ email });
-    console.log(myInfo);
     if (!myInfo) {
       throw new NotFoundException('내 정보를 찾는데 실패하였습니다');
     }

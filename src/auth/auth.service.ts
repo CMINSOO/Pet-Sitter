@@ -58,7 +58,6 @@ export class AuthService {
   }
 
   async findUserByEmail(payloadEmail: string) {
-    console.log('!!!!!', payloadEmail);
     const user = await this.UserRepository.findOne({
       where: { email: payloadEmail },
     });
@@ -73,7 +72,6 @@ export class AuthService {
     if (!result) {
       throw new UnauthorizedException('인증정보 가 일치 하지 않습니다');
     }
-    console.log('######', result);
     return result;
   }
 
