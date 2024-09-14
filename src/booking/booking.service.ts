@@ -33,7 +33,7 @@ export class BookingService {
     // 문자열로 받은 bookingStartTime을 Date 객체로 변환
     const startTime = new Date(bookingStartTime);
     if (isNaN(startTime.getTime())) {
-      throw new BadRequestException('Invalid bookingStartTime format.');
+      throw new BadRequestException('올바르지 않은 시간 형식 입니다.');
     }
 
     const validateUser = await this.userRepository.findOne({
@@ -64,11 +64,12 @@ export class BookingService {
       throw new ConflictException('해당 시간대에 이미 예약이 존재합니다.');
     }
 
-    const bookingData = {
+    const bookingData: Partial<Booking> = {
       userId,
       sitterId,
       bookingStartTime: new Date(bookingStartTime),
       bookingEndTime,
+      serviceHour,
       description,
     };
 

@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ServiceHour } from '../types/service-hour.type';
 
 @Entity('bookings')
 export class Booking {
@@ -27,8 +28,12 @@ export class Booking {
   @Column()
   bookingEndTime: Date;
 
-  @Column()
-  serviceHour: number;
+  @Column({
+    type: 'enum',
+    enum: ServiceHour,
+    nullable: false,
+  })
+  serviceHour: ServiceHour;
 
   @Column()
   description: string;
