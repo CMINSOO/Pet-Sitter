@@ -108,7 +108,6 @@ export class SitterController {
     @UserInfo() user: User,
     @Body() updateSitterInfoDto: UpdateSitterInfoDto,
   ) {
-    console.log(user);
     const data = await this.sitterService.updateInfo(
       updateSitterInfoDto,
       user.email,

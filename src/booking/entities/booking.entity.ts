@@ -22,7 +22,13 @@ export class Booking {
   sitterId: number;
 
   @Column()
-  bookingDate: Date;
+  bookingStartTime: Date;
+
+  @Column()
+  bookingEndTime: Date;
+
+  @Column()
+  serviceHour: number;
 
   @Column()
   description: string;
