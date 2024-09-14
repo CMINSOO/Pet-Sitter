@@ -40,6 +40,24 @@ export class SitterController {
   }
 
   /**
+   * 시터 내정보 불러오기
+   * @param user
+   * @returns
+   */
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  async me(@UserInfo() user: { email: string }) {
+    const data = await this.sitterService.myInfo(user.email);
+
+    return {
+      status: HttpStatus.OK,
+      message: '내 정보를 불러왔습니다!',
+      data,
+    };
+  }
+
+  /**
    * 시터 상세조회
    * @param id
    * @returns
@@ -68,29 +86,11 @@ export class SitterController {
     @UserInfo() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    const data = await this.sitterService.recommend(id, user.id);
+    const data = await this.sitterService.recommend(id, user.email);
 
     return {
       status: HttpStatus.CREATED,
       message: '시터 를 추천하였습니다',
-      data,
-    };
-  }
-
-  /**
-   * 내 정보
-   * @param user
-   * @returns
-   */
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @Get('me')
-  async me(@UserInfo() user: User) {
-    const data = await this.sitterService.myInfo(user.id);
-
-    return {
-      status: HttpStatus.OK,
-      message: '내 정보를 불러왔습니다!',
       data,
     };
   }
@@ -108,9 +108,10 @@ export class SitterController {
     @UserInfo() user: User,
     @Body() updateSitterInfoDto: UpdateSitterInfoDto,
   ) {
+    console.log(user);
     const data = await this.sitterService.updateInfo(
       updateSitterInfoDto,
-      user.id,
+      user.email,
     );
 
     return {

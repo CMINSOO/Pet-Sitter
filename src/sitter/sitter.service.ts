@@ -69,7 +69,7 @@ export class SitterService {
     return returnValue;
   }
 
-  async recommend(id: number, userId: number) {
+  async recommend(id: number, email: string) {
     const sitter = await this.sitterRepository.findOne({
       where: { id, deletedAt: null },
     });
@@ -77,13 +77,14 @@ export class SitterService {
       throw new NotFoundException('시터를 찾을수 없습니다');
     }
     const user = await this.userRepository.findOne({
-      where: { id: userId, deletedAt: null },
+      where: { email, deletedAt: null },
     });
     if (!user) {
       throw new NotFoundException('유저 정보를 찾을수 없습니다.');
     }
+
     const existRecommend = await this.recommendRepository.findOne({
-      where: { sitterId: id, userId },
+      where: { sitterId: id, userId: user.id },
     });
     if (existRecommend) {
       throw new ConflictException('이미 추천한 시터입니다');
@@ -96,7 +97,7 @@ export class SitterService {
       await queryRunner.manager.increment(Sitter, { id }, 'recommendCount', 1);
 
       const recommendData = this.recommendRepository.create({
-        userId,
+        userId: user.id,
         sitterId: id,
       });
       await queryRunner.manager.save(Recommend, recommendData);
@@ -110,10 +111,10 @@ export class SitterService {
     }
   }
 
-  async updateInfo(updateSitterInfoDto: UpdateSitterInfoDto, sitterId: number) {
+  async updateInfo(updateSitterInfoDto: UpdateSitterInfoDto, email: string) {
     const { nickname, description, profileUrl } = updateSitterInfoDto;
     const sitter = await this.sitterRepository.findOne({
-      where: { id: sitterId },
+      where: { email },
     });
     if (!sitter) {
       throw new NotFoundException('시터 정보를 찾을수 없습니다');
@@ -131,9 +132,9 @@ export class SitterService {
     return returnValue;
   }
 
-  async myInfo(id: number) {
+  async myInfo(email: string) {
     const sitter = await this.sitterRepository.findOne({
-      where: { id },
+      where: { email },
     });
     if (!sitter) {
       throw new NotFoundException('시터 정보를 불러오는데 실패하였습니다');

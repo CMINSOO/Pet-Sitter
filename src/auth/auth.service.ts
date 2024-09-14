@@ -57,6 +57,26 @@ export class AuthService {
     return user.id;
   }
 
+  async findUserByEmail(payloadEmail: string) {
+    console.log('!!!!!', payloadEmail);
+    const user = await this.UserRepository.findOne({
+      where: { email: payloadEmail },
+    });
+    // if(!user){
+    //   throw new UnauthorizedException('인증 정보가 일치하지 않습니다')
+    // }
+    const result = user
+      ? user
+      : await this.SitterRepository.findOne({
+          where: { email: payloadEmail },
+        });
+    if (!result) {
+      throw new UnauthorizedException('인증정보 가 일치 하지 않습니다');
+    }
+    console.log('######', result);
+    return result;
+  }
+
   async checkNickname(nickname: string) {
     const existUserNickname = await this.UserRepository.findOne({
       where: { nickname },
@@ -154,8 +174,8 @@ export class AuthService {
     return sitter;
   }
 
-  async createToken(userId) {
-    const payload = { id: userId };
+  async createToken(userId: number, email: string) {
+    const payload = { id: userId, email };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
       expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRES'),
@@ -166,7 +186,7 @@ export class AuthService {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async userSignIn(userId: number, signInDto: SignInDto) {
-    const accessToken = await this.createToken(userId);
+    const accessToken = await this.createToken(userId, signInDto.email);
 
     return accessToken;
   }

@@ -16,9 +16,9 @@ export class UserService {
     private readonly authService: AuthService,
   ) {}
 
-  async getMyInfo(id: number) {
-    const myInfo = await this.userRepository.findOneBy({ id });
-
+  async getMyInfo(email: string) {
+    const myInfo = await this.userRepository.findOneBy({ email });
+    console.log(myInfo);
     if (!myInfo) {
       throw new NotFoundException('내 정보를 찾는데 실패하였습니다');
     }
@@ -35,10 +35,10 @@ export class UserService {
     return userInfo;
   }
 
-  async updateMyInfo(id: number, updateMyInfo: UpdateMyInfoDto) {
+  async updateMyInfo(email: string, updateMyInfo: UpdateMyInfoDto) {
     const { description, nickname, profileUrl } = updateMyInfo;
     const user = await this.userRepository.findOne({
-      where: { id },
+      where: { email },
     });
     if (!user) {
       throw new NotFoundException('존재하지 않은 유저입니다');

@@ -29,7 +29,7 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
   async myInfo(@UserInfo() user: User) {
-    const data = await this.userService.getMyInfo(user.id);
+    const data = await this.userService.getMyInfo(user.email);
 
     return {
       status: HttpStatus.OK,
@@ -67,7 +67,7 @@ export class UserController {
     @UserInfo() user: User,
     @Body() updateMyInfo: UpdateMyInfoDto,
   ) {
-    const data = await this.userService.updateMyInfo(user.id, updateMyInfo);
+    const data = await this.userService.updateMyInfo(user.email, updateMyInfo);
 
     return {
       status: HttpStatus.CREATED,

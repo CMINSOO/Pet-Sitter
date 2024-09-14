@@ -27,7 +27,9 @@ export class SignInDto extends PickType(User, ['email', 'password']) {
   /**
    * @exmaple "SITTER"
    */
-  @IsEnum({ type: 'enum', enum: UserType, default: UserType.SITTER })
+  @IsEnum(UserType, {
+    message: 'SITTER, USER 중에 골라야합니다',
+  })
   @IsOptional()
-  userType: UserType.SITTER | UserType.USER;
+  userType: UserType;
 }
