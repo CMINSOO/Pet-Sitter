@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Sitter } from 'src/sitter/entities/sitter.entity';
@@ -144,6 +145,22 @@ export class BookingService {
     };
 
     const returnValue = await this.bookingRepository.save(bookingData);
+
+    return returnValue;
+  }
+
+  async cancelBooking(userId: number, bookingId: number) {
+    const book = await this.bookingRepository.findOne({
+      where: { id: bookingId },
+    });
+    if (book.userId !== userId) {
+      throw new UnauthorizedException('접근 권한이 없는 예약정보입니다');
+    }
+    if (!book) {
+      throw new NotFoundException('예약을 찾을 수 없습니다.');
+    }
+
+    const returnValue = await this.bookingRepository.softDelete(bookingId);
 
     return returnValue;
   }

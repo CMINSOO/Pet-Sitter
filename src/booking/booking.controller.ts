@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpStatus,
   Param,
   ParseIntPipe,
@@ -74,6 +75,28 @@ export class BookingController {
     return {
       status: HttpStatus.OK,
       message: '예약정보를 변경하였습니다',
+      data,
+    };
+  }
+
+  /**
+   * 예약 취소하기
+   * @param user
+   * @param bookingId
+   * @returns
+   */
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('cancel/:bookingId')
+  async cancelBooking(
+    @UserInfo() user: User,
+    @Param('bookingId', ParseIntPipe) bookingId: number,
+  ) {
+    const data = await this.bookingService.cancelBooking(user.id, bookingId);
+
+    return {
+      status: HttpStatus.OK,
+      message: '예약을 취소하였습니다',
       data,
     };
   }
