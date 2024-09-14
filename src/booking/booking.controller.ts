@@ -4,7 +4,9 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
@@ -13,6 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UserInfo } from 'src/auth/decorators/user-info.decorator';
 import { User } from 'src/user/entities/user.entity';
 import { CreateBookingDto } from './dtos/create-booking.dto';
+import { UpdateBookingDto } from './dtos/update-booking.dto';
 
 @ApiTags('booking')
 @Controller('bookings')
@@ -43,6 +46,34 @@ export class BookingController {
     return {
       status: HttpStatus.CREATED,
       message: '예약에 성공하였습니다',
+      data,
+    };
+  }
+
+  /**
+   * 예약정보 수정
+   * @param user
+   * @param bookingId
+   * @param updateBookingDto
+   * @returns
+   */
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('update/:bookingId')
+  async updateBooking(
+    @UserInfo() user: User,
+    @Query('bookingId', ParseIntPipe) bookingId: number,
+    @Body() updateBookingDto: UpdateBookingDto,
+  ) {
+    const data = await this.bookingService.updateBooking(
+      user.id,
+      bookingId,
+      updateBookingDto,
+    );
+
+    return {
+      status: HttpStatus.OK,
+      message: '예약정보를 변경하였습니다',
       data,
     };
   }

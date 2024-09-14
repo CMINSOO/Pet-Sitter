@@ -11,6 +11,7 @@ import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { Booking } from './entities/booking.entity';
 import { CreateBookingDto } from './dtos/create-booking.dto';
 import { ServiceHour } from './types/service-hour.type';
+import { UpdateBookingDto } from './dtos/update-booking.dto';
 
 @Injectable()
 export class BookingService {
@@ -97,5 +98,53 @@ export class BookingService {
         throw new Error('올바르지 않은 시간입니다');
     }
     return startTime;
+  }
+
+  async updateBooking(
+    userId: number,
+    bookingId: number,
+    updateBookingDto: UpdateBookingDto,
+  ) {
+    const { description, serviceHour, bookingStartTime } = updateBookingDto;
+
+    const booked = await this.bookingRepository.findOne({
+      where: { id: bookingId, userId },
+    });
+    if (!booked) {
+      throw new NotFoundException('예약 정보를 찾을수 없습니다.');
+    }
+
+    const startTime = new Date(bookingStartTime);
+    if (isNaN(startTime.getTime())) {
+      throw new BadRequestException('올바르지 않은 시간 형식 입니다.');
+    }
+
+    const bookingEndTime = this.calculateEndTime(startTime, serviceHour);
+
+    const validStartTime = await this.bookingRepository.findOne({
+      where: {
+        sitterId: booked.sitterId,
+        bookingStartTime: LessThanOrEqual(bookingEndTime),
+        bookingEndTime: MoreThanOrEqual(startTime),
+      },
+    });
+
+    if (validStartTime) {
+      throw new ConflictException('해당 시간대에 이미 예약이 존재합니다.');
+    }
+
+    const bookingData: Partial<Booking> = {
+      ...booked,
+      userId,
+      sitterId: booked.sitterId,
+      bookingStartTime: new Date(bookingStartTime),
+      bookingEndTime,
+      serviceHour,
+      description,
+    };
+
+    const returnValue = await this.bookingRepository.save(bookingData);
+
+    return returnValue;
   }
 }
