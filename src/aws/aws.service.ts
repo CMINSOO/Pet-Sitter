@@ -17,6 +17,10 @@ export class AwsService {
     });
   }
 
+  async saveImage(file: Express.Multer.File) {
+    return await this.imageUpload(file);
+  }
+
   private async getUUID() {
     return v4();
   }

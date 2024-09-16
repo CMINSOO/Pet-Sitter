@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Sitter } from 'src/sitter/entities/sitter.entity';
 import { UpdateMyInfoDto } from './dtos/update-my-info.dto';
 import { AuthService } from 'src/auth/auth.service';
+import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class UserService {
@@ -14,6 +15,7 @@ export class UserService {
     @InjectRepository(Sitter)
     private readonly sitterRepository: Repository<Sitter>,
     private readonly authService: AuthService,
+    private readonly awsService: AwsService,
   ) {}
 
   async getMyInfo(email: string) {
@@ -34,7 +36,11 @@ export class UserService {
     return userInfo;
   }
 
-  async updateMyInfo(email: string, updateMyInfo: UpdateMyInfoDto) {
+  async updateMyInfo(
+    email: string,
+    updateMyInfo: UpdateMyInfoDto,
+    file?: Express.Multer.File,
+  ) {
     const { description, nickname, profileUrl } = updateMyInfo;
     const user = await this.userRepository.findOne({
       where: { email },
@@ -45,14 +51,23 @@ export class UserService {
 
     await this.authService.checkNickname(nickname);
 
-    const newInfo = {
-      ...user,
-      description,
-      nickname,
-      profileUrl,
-    };
+    const updateData: Partial<User> = {};
 
-    await this.userRepository.save(newInfo);
-    return newInfo;
+    if (file) {
+      const uploadResult = await this.awsService.saveImage(file);
+      updateData.profileUrl = uploadResult.imageUrl;
+    } else if (profileUrl) {
+      updateData.profileUrl = profileUrl;
+    }
+
+    if (nickname) {
+      updateData.nickname = nickname;
+    }
+    if (description) {
+      updateData.description = description;
+    }
+
+    await this.userRepository.update(user.id, updateData);
+    return updateData;
   }
 }
