@@ -8,15 +8,18 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SitterService } from './sitter.service';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FindAllSitterDto } from './dto/find-all-sitter.dto';
 import { UserInfo } from 'src/auth/decorators/user-info.decorator';
 import { User } from 'src/user/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateSitterInfoDto } from './dto/update-sitter-info.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('sitter')
 @Controller('sitters')
@@ -99,18 +102,42 @@ export class SitterController {
    * 시터 정보수정
    * @param user
    * @param updateSitterInfoDto
+   * @param file
    * @returns
    */
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', nullable: true },
+        nickname: { type: 'string', example: 'new_nickname', nullable: true },
+        profileUrl: {
+          type: 'string',
+          example: 'https://example.com/profile.jpg',
+          nullable: true,
+        },
+        description: {
+          type: 'string',
+          example: 'New description',
+          nullable: true,
+        },
+      },
+    },
+  })
   @Patch('me')
   async myInfo(
     @UserInfo() user: User,
     @Body() updateSitterInfoDto: UpdateSitterInfoDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     const data = await this.sitterService.updateInfo(
       updateSitterInfoDto,
       user.email,
+      file,
     );
 
     return {

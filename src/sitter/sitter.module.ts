@@ -6,10 +6,11 @@ import { Sitter } from './entities/sitter.entity';
 import { Recommend } from './entities/recommend-sitter.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
+import { AwsService } from 'src/aws/aws.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Sitter, Recommend, User, Booking])],
   controllers: [SitterController],
-  providers: [SitterService],
+  providers: [SitterService, AwsService],
 })
 export class SitterModule {}

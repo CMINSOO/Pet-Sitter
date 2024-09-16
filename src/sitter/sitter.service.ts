@@ -13,6 +13,7 @@ import { User } from 'src/user/entities/user.entity';
 import { Recommend } from './entities/recommend-sitter.entity';
 import { UpdateSitterInfoDto } from './dto/update-sitter-info.dto';
 import { Booking } from 'src/booking/entities/booking.entity';
+import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class SitterService {
@@ -26,6 +27,7 @@ export class SitterService {
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
     private readonly dataSource: DataSource,
+    private readonly awsService: AwsService,
   ) {}
 
   async findAll(findAllSitterDto: FindAllSitterDto) {
@@ -115,7 +117,11 @@ export class SitterService {
     }
   }
 
-  async updateInfo(updateSitterInfoDto: UpdateSitterInfoDto, email: string) {
+  async updateInfo(
+    updateSitterInfoDto: UpdateSitterInfoDto,
+    email: string,
+    file: Express.Multer.File,
+  ) {
     const { nickname, description, profileUrl } = updateSitterInfoDto;
     const sitter = await this.sitterRepository.findOne({
       where: { email },
@@ -124,14 +130,26 @@ export class SitterService {
       throw new NotFoundException('시터 정보를 찾을수 없습니다');
     }
 
-    const newInfo = {
-      ...sitter,
-      nickname,
-      description,
-      profileUrl,
-    };
+    const updateData: Partial<Sitter> = {};
+    if (file) {
+      const uploadResult = await this.awsService.saveImage(file);
+      updateData.profileUrl = uploadResult.imageUrl;
+    } else if (profileUrl) {
+      updateData.profileUrl = profileUrl;
+    }
 
-    const returnValue = await this.sitterRepository.save(newInfo);
+    if (nickname) {
+      updateData.nickname = nickname;
+    }
+
+    if (description) {
+      updateData.description = description;
+    }
+
+    const returnValue = await this.sitterRepository.update(
+      sitter.id,
+      updateData,
+    );
 
     return returnValue;
   }
