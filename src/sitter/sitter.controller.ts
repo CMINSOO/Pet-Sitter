@@ -119,4 +119,48 @@ export class SitterController {
       data,
     };
   }
+
+  /**
+   * 예약 상세조회
+   * @param user
+   * @param bookingId
+   * @returns
+   */
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('my/bookings/:bookingId')
+  async readMyBooking(
+    @UserInfo() user: User,
+    @Param('bookingId', ParseIntPipe) bookingId: number,
+  ) {
+    const data = await this.sitterService.readMyBooking(
+      user.id,
+      user.email,
+      bookingId,
+    );
+
+    return {
+      status: HttpStatus.OK,
+      message: '예약 상세조회에 성공하였습니다',
+      data,
+    };
+  }
+
+  /**
+   * 내 예약건 전체조회
+   * @param user
+   * @returns
+   */
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('my/bookings')
+  async findMyBooking(@UserInfo() user: User) {
+    const data = await this.sitterService.findMyBook(user.id, user.email);
+
+    return {
+      status: HttpStatus.OK,
+      message: '전체 예약 현황을 조회했습니다',
+      data,
+    };
+  }
 }
