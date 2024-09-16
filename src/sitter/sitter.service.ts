@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Sitter } from './entities/sitter.entity';
@@ -11,6 +12,7 @@ import { FindAllSitterDto } from './dto/find-all-sitter.dto';
 import { User } from 'src/user/entities/user.entity';
 import { Recommend } from './entities/recommend-sitter.entity';
 import { UpdateSitterInfoDto } from './dto/update-sitter-info.dto';
+import { Booking } from 'src/booking/entities/booking.entity';
 
 @Injectable()
 export class SitterService {
@@ -21,6 +23,8 @@ export class SitterService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Recommend)
     private readonly recommendRepository: Repository<Recommend>,
+    @InjectRepository(Booking)
+    private readonly bookingRepository: Repository<Booking>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -141,5 +145,39 @@ export class SitterService {
     }
 
     return sitter;
+  }
+
+  async findMyBook(userId: number, userEmail: string) {
+    const sitter = await this.sitterRepository.findOne({
+      where: { id: userId, email: userEmail },
+    });
+    if (!sitter) {
+      throw new UnauthorizedException('접근 권한이 없는 예약정보입니다.');
+    }
+    const returnValue = await this.bookingRepository.find({
+      where: { sitterId: sitter.id },
+    });
+
+    if (returnValue.length == 0) {
+      throw new NotFoundException('예약이 존재하지 않습니다.');
+    }
+    return returnValue;
+  }
+
+  async readMyBooking(userId: number, userEmail: string, bookingId: number) {
+    const sitter = await this.sitterRepository.findOne({
+      where: { id: userId, email: userEmail },
+    });
+    if (!sitter) {
+      throw new UnauthorizedException('접근 권한이 없는 예약정보입니다.');
+    }
+    const bookingData = await this.bookingRepository.findOne({
+      where: { id: bookingId },
+    });
+    if (bookingData.sitterId !== sitter.id) {
+      throw new UnauthorizedException('접근 권한이 없는 예약정보입니다.');
+    }
+
+    return bookingData;
   }
 }
