@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { SitterModule } from './sitter/sitter.module';
 import { BookingModule } from './booking/booking.module';
+import { AwsModule } from './aws/aws.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { BookingModule } from './booking/booking.module';
     AuthModule,
     SitterModule,
     BookingModule,
+    AwsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
