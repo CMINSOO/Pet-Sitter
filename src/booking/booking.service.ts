@@ -55,7 +55,7 @@ export class BookingService {
       throw new NotFoundException('시터를 조회할수 없습니다.');
     }
 
-    await this.joinQueue.add('createBookingJob', {
+    const job = await this.joinQueue.add('createBookingJob', {
       userId,
       sitterId,
       bookingStartTime,
@@ -63,7 +63,7 @@ export class BookingService {
       description,
     });
 
-    return { message: '예약이 요청되었습니다.' };
+    return { message: '예약이 요청되었습니다.', JobId: job.id };
   }
 
   calculateEndTime(bookingStartTime: Date, serviceHour: ServiceHour): Date {
@@ -82,6 +82,19 @@ export class BookingService {
         throw new Error('올바르지 않은 시간입니다');
     }
     return startTime;
+  }
+
+  async checkStatus(jobId: string) {
+    const job = await this.joinQueue.getJob(jobId);
+
+    if (!job) {
+      return { status: 'not_found', message: '작업을 찾을 수 없습니다.' };
+    }
+
+    const state = await job.getState(); // 작업의 현재 상태를 가져옴 (대기 중, 진행 중, 완료, 실패 등)
+    const result = job.returnvalue; // 작업이 완료된 경우 결과 값
+
+    return { status: state, result };
   }
 
   async updateBooking(

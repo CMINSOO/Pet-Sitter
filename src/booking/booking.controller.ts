@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpStatus,
   Param,
   ParseIntPipe,
@@ -46,9 +47,20 @@ export class BookingController {
 
     return {
       status: HttpStatus.CREATED,
-      message: '예약에 성공하였습니다',
       data,
     };
+  }
+
+  /**
+   * 예약상태
+   * @param jobId
+   * @returns
+   */
+  @Get('status/:jobId')
+  async checkBookingStatus(@Param('jobId') jobId: string) {
+    const data = await this.bookingService.checkStatus(jobId);
+
+    return data;
   }
 
   /**
