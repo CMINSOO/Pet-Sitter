@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -14,6 +15,8 @@ import { Recommend } from './entities/recommend-sitter.entity';
 import { UpdateSitterInfoDto } from './dto/update-sitter-info.dto';
 import { Booking } from 'src/booking/entities/booking.entity';
 import { AwsService } from 'src/aws/aws.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class SitterService {
@@ -28,11 +31,18 @@ export class SitterService {
     private readonly bookingRepository: Repository<Booking>,
     private readonly dataSource: DataSource,
     private readonly awsService: AwsService,
+    @Inject(CACHE_MANAGER) private readonly cacheManger: Cache,
   ) {}
 
   async findAll(findAllSitterDto: FindAllSitterDto) {
     const { sortBy, orderBy } = findAllSitterDto;
 
+    const cacheKey = `sitters:${sortBy}-${orderBy}`;
+    const cachedSitters = await this.cacheManger.get<string>(cacheKey);
+
+    if (cachedSitters) {
+      return cachedSitters;
+    }
     const orderOption = sortBy || 'recommendCount';
     const sitters = await this.sitterRepository.find({
       where: { deletedAt: null },
@@ -51,6 +61,9 @@ export class SitterService {
       description: item.description,
       recommendCount: item.recommendCount,
     }));
+
+    const ttl = 60 * 5;
+    await this.cacheManger.set(cacheKey, mappedSitters, ttl);
 
     return mappedSitters;
   }
