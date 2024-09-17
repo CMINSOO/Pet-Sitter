@@ -13,6 +13,8 @@ import { Booking } from './entities/booking.entity';
 import { CreateBookingDto } from './dtos/create-booking.dto';
 import { ServiceHour } from './types/service-hour.type';
 import { UpdateBookingDto } from './dtos/update-booking.dto';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class BookingService {
@@ -23,6 +25,7 @@ export class BookingService {
     private readonly sitterRepository: Repository<Sitter>,
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
+    @InjectQueue('joinQueue') private joinQueue: Queue,
   ) {}
 
   async createBooking(
@@ -52,38 +55,18 @@ export class BookingService {
       throw new NotFoundException('시터를 조회할수 없습니다.');
     }
 
-    const bookingEndTime = this.calculateEndTime(startTime, serviceHour);
-
-    const existingBooking = await this.bookingRepository.findOne({
-      where: {
-        sitterId,
-        bookingStartTime: LessThanOrEqual(bookingEndTime),
-        bookingEndTime: MoreThanOrEqual(startTime),
-      },
-    });
-
-    if (existingBooking) {
-      throw new ConflictException('해당 시간대에 이미 예약이 존재합니다.');
-    }
-
-    const bookingData: Partial<Booking> = {
+    await this.joinQueue.add('createBookingJob', {
       userId,
       sitterId,
-      bookingStartTime: new Date(bookingStartTime),
-      bookingEndTime,
+      bookingStartTime,
       serviceHour,
       description,
-    };
+    });
 
-    const returnValue = await this.bookingRepository.save(bookingData);
-
-    return returnValue;
+    return { message: '예약이 요청되었습니다.' };
   }
 
-  private calculateEndTime(
-    bookingStartTime: Date,
-    serviceHour: ServiceHour,
-  ): Date {
+  calculateEndTime(bookingStartTime: Date, serviceHour: ServiceHour): Date {
     const startTime = new Date(bookingStartTime);
     switch (serviceHour) {
       case ServiceHour.ONE_HOUR:
