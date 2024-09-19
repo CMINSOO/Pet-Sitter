@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -15,6 +16,8 @@ import { Sitter } from 'src/sitter/entities/sitter.entity';
 import { SignInDto } from './dto/user-sign-in.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { UserType } from './types/user-type';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +28,7 @@ export class AuthService {
     private readonly SitterRepository: Repository<Sitter>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManger: Cache,
   ) {}
 
   async checkEmail(email: string) {
@@ -57,22 +61,24 @@ export class AuthService {
     return user.id;
   }
 
-  async findUserByEmail(payloadEmail: string) {
-    const user = await this.UserRepository.findOne({
-      where: { email: payloadEmail },
-    });
-    // if(!user){
-    //   throw new UnauthorizedException('인증 정보가 일치하지 않습니다')
-    // }
-    const result = user
-      ? user
-      : await this.SitterRepository.findOne({
-          where: { email: payloadEmail },
-        });
-    if (!result) {
-      throw new UnauthorizedException('인증정보 가 일치 하지 않습니다');
+  async findUserByEmail(payloadEmail: string, userType: UserType) {
+    if (userType === UserType.USER) {
+      const user = await this.UserRepository.findOne({
+        where: { email: payloadEmail },
+      });
+      if (!user) {
+        throw new UnauthorizedException('인증정보 가 일치 하지 않습니다');
+      }
+      return user;
+    } else if (userType === UserType.SITTER) {
+      const user = await this.SitterRepository.findOne({
+        where: { email: payloadEmail },
+      });
+      if (!user) {
+        throw new UnauthorizedException('인증정보 가 일치 하지 않습니다');
+      }
+      return user;
     }
-    return result;
   }
 
   async checkNickname(nickname: string) {
@@ -172,20 +178,81 @@ export class AuthService {
     return sitter;
   }
 
-  async createToken(userId: number, email: string) {
-    const payload = { id: userId, email };
+  async createToken(userId: number, email: string, userType: string) {
+    const payload = { id: userId, email, userType };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
       expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRES'),
     });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRES'),
+    });
 
-    return accessToken;
+    const hashedRefreshToken = bcrypt.hashSync(
+      refreshToken,
+      Number(this.configService.get<number>('HASH_ROUND')),
+      //10,
+    );
+
+    const redisRefreshToken = await this.cacheManger.get<string>(
+      `${userType}-userId:${userId}`,
+    );
+    if (redisRefreshToken) {
+      await this.cacheManger.del(`${userType}-userId:${userId}`);
+    }
+
+    const ttl = 60 * 60 * 24 * 7;
+    await this.cacheManger.set(
+      `${userType}-userId:${userId}`,
+      hashedRefreshToken,
+      ttl,
+    );
+
+    return { accessToken, refreshToken };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async userSignIn(userId: number, signInDto: SignInDto) {
-    const accessToken = await this.createToken(userId, signInDto.email);
+    const accessToken = await this.createToken(
+      userId,
+      signInDto.email,
+      signInDto.userType,
+    );
 
     return accessToken;
+  }
+
+  async signOut(userEmail: string, userType: UserType) {
+    if (userType === UserType.USER) {
+      const user = await this.UserRepository.findOne({
+        where: { email: userEmail },
+      });
+
+      const redisRefreshToken = await this.cacheManger.get<string>(
+        `${userType}-userId:${user.id}`,
+      );
+      console.log(redisRefreshToken);
+      console.log();
+      if (!user || !redisRefreshToken) {
+        throw new NotFoundException('없는 유저이거나 토큰이 존재하지 않습니다');
+      }
+      await this.cacheManger.del(`${userType}-userId:${user.id}`);
+
+      return true;
+    } else if (userType === UserType.SITTER) {
+      const user = await this.SitterRepository.findOne({
+        where: { email: userEmail },
+      });
+      const redisRefreshToken = await this.cacheManger.get<string>(
+        `${userType}-userId:${user.id}`,
+      );
+      if (!user || !redisRefreshToken) {
+        throw new NotFoundException('없는 유저이거나 토큰이 존재하지 않습니다');
+      }
+      await this.cacheManger.del(`${userType}-userId:${user.id}`);
+
+      return true;
+    }
   }
 }
