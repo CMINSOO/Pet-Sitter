@@ -1,4 +1,4 @@
-name: Petsitter nestjs ci
+name: Petsitter nestjs CI
 
 on: # 언제 실행 될지 정의
   workflow_dispatch: # 수동 실행
