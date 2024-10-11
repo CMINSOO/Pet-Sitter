@@ -45,4 +45,4 @@ jobs:
         run: |
 
           npm run start
-          # yarn test
+          # yarn start
