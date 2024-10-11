@@ -41,7 +41,7 @@ jobs:
             git switch main
 
             # 최신 소스 코드를 가져옴
-            git pull
+            git pull origin main
 
             # .env 파일 생성
             # ">" 는 생성 또는 덮어쓰기
