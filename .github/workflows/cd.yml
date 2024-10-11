@@ -35,7 +35,7 @@ jobs:
             # export PATH="$(yarn global bin):$PATH"
 
             # 프로젝트 폴더로 이동
-            cd /home/ubuntu/sparta-nest-cicd
+            cd /home/ubuntu/Pet-Sitter
 
             # main 브랜치로 이동
             git switch main
