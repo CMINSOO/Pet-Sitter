@@ -48,6 +48,8 @@ export class AuthService {
   async crossCheckPassword(password: string, confirmPassword: string) {
     if (password !== confirmPassword) {
       throw new BadRequestException('비밀번호가 일치하지 않습니다.');
+    } else {
+      return true;
     }
   }
 
