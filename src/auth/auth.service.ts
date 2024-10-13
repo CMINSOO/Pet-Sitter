@@ -58,7 +58,7 @@ export class AuthService {
       where: { id: payloadId },
     });
     if (!user) {
-      throw new UnauthorizedException('인증 정보가 일치하지 않습니다.');
+      throw new NotFoundException('유저 정보를 찾을수 없습니다');
     }
     return user.id;
   }
@@ -94,6 +94,7 @@ export class AuthService {
     if (existSitterNickname || existUserNickname) {
       throw new ConflictException('이미 사용중인 닉네임 입니다');
     }
+    return true;
   }
 
   async validateUser({ email, password }: SignInDto) {
