@@ -341,9 +341,4 @@ describe('AuthService', () => {
       });
     });
   });
-  //   이 코드의 테스트 시나리오:
-  // JWT 토큰 생성 확인: jwtService.sign()이 올바르게 호출되었는지 확인해야 합니다.
-  // configService.get() 값 검증: ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, HASH_ROUND 등의 설정 값이 제대로 불러와지는지 검증합니다.
-  // 리프레시 토큰 해싱: bcrypt.hashSync()이 호출되고, 리프레시 토큰이 해싱되는지 확인합니다.
-  // Redis 캐시 확인 및 갱신: cacheManager.get()과 cacheManager.set()이 올바르게 호출되고, 리프레시 토큰이 제대로 저장되는지 검증해야 합니다.
 });
